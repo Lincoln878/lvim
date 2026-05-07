@@ -6,15 +6,17 @@
 #include "Editor.h"
 using namespace lvim;
 
-Editor::Editor(std::string &filePath)
-    : filePath(std::move(filePath)), vPointer(0), hPointer(0), mode(0) {
-    std::ifstream file(this->filePath, std::ios::in);
-    if (!file.is_open()) {
-        std::ofstream create(this->filePath);
+Editor::Editor(std::string &filePathStr)
+    : filePath(std::move(filePathStr)), vPointer(0), hPointer(0), mode(0) {
+    if (!std::filesystem::exists(filePath)) {
+        std::ofstream create(filePath);
         if (!create)
-            throw std::runtime_error("Failed to open file" + std::string(filePath));
+            throw std::runtime_error("Failed to create file" + filePath.string());
+    }
 
-        create.close();
+    std::ifstream file(filePath, std::ios::in);
+    if (!file.is_open()) {
+        throw std::runtime_error("Failed to open file" + filePath.string());
     }
 
     std::string line;
@@ -31,6 +33,8 @@ Editor::Editor(std::string &filePath)
     editor = newwin(max_y - 1, max_x, 0, 0);
     modeBar = newwin(1, max_x, max_y - 1, 0);
 
+    idlok(editor, true);
+    idlok(modeBar, true);
     wclear(editor);
     wclear(modeBar);
     box(editor, 0, 0);
@@ -40,19 +44,21 @@ Editor::Editor(std::string &filePath)
     wrefresh(editor);
 }
 
-Editor::Editor(const char* filePath)
-    : filePath(filePath), vPointer(0), hPointer(0), mode(0) {
-    std::ifstream file(this->filePath, std::ios::in);
-    if (!file.is_open()) {
-        std::ofstream create(this->filePath);
+Editor::Editor(const char* filePathStr)
+    : filePath(filePathStr), vPointer(0), hPointer(0), mode(0) {
+    if (!std::filesystem::exists(filePath)) {
+        std::ofstream create(filePath);
         if (!create)
-            throw std::runtime_error("Failed to open file" + std::string(filePath));
+            throw std::runtime_error("Failed to create file" + filePath.string());
+    }
 
-        create.close();
+    std::ifstream file(filePath, std::ios::in);
+    if (!file.is_open()) {
+        throw std::runtime_error("Failed to open file" + filePath.string());
     }
 
     std::string line;
-    while (file >> line) {
+    while (getline(file, line)) {
         content.emplace_back(line);
     }
     if (content.empty()) content.emplace_back("");
@@ -65,6 +71,8 @@ Editor::Editor(const char* filePath)
     editor = newwin(max_y - 1, max_x, 0, 0);
     modeBar = newwin(1, max_x, max_y - 1, 0);
 
+    idlok(editor, true);
+    idlok(modeBar, true);
     wclear(editor);
     wclear(modeBar);
     box(editor, 0, 0);
@@ -72,6 +80,11 @@ Editor::Editor(const char* filePath)
     leaveok(editor, FALSE);
     wrefresh(modeBar);
     wrefresh(editor);
+}
+
+Editor::~Editor() {
+    if (editor) delwin(editor);
+    if (modeBar) delwin(modeBar);
 }
 
 void Editor::moveHorz(const int offset) {
@@ -172,7 +185,6 @@ int Editor::getCommand() {
             moveVert(-1);
             break;
         case KEY_DOWN:
-            if (content[vPointer].size() != vPointer + 1) newLine(static_cast<int>(vPointer));
             moveVert(1);
             break;
         case KEY_LEFT:
@@ -251,7 +263,7 @@ void Editor::save() {
     }
 
     for (auto &line : content) {
-        file << line << std::endl;
+        file << line << '\n';
     }
 
     file.close();

@@ -17,7 +17,7 @@ namespace lvim {
         explicit Editor(const char* filePath);
         Editor(Editor &&editor) = delete;
         Editor &operator=(const Editor &editor) = delete;
-        ~Editor() = default;
+        ~Editor();
         int getInput();
         int getCommand();
         int handleInput();
