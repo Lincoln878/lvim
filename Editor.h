@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <filesystem>
 #include <ncurses.h>
 
 namespace lvim {
@@ -17,7 +18,9 @@ namespace lvim {
         Editor(Editor &&editor) = delete;
         Editor &operator=(const Editor &editor) = delete;
         ~Editor() = default;
-        char getInput();
+        int getInput();
+        int getCommand();
+        int handleInput();
         void insertChar(char c);
         void deleteChar();
         void newLine(int vPos);
@@ -27,8 +30,7 @@ namespace lvim {
         void save();
         void display() const;
     private:
-        std::string filePath;
-        std::fstream file;
+        std::filesystem::path filePath;
         std::vector<std::string> content;
         size_t vPointer;
         size_t hPointer;

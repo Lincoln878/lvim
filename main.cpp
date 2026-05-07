@@ -1,11 +1,17 @@
 //
 // Created by Shun Hang Lo on 5/7/26.
 //
-#include <string>
 #include <Editor.h>
 #include <iostream>
 
 int main(int argc, char** argv) {
+    if (argc != 2) {
+        std::cout << "Please enter a filename to enter lvim!\n";
+        return 0;
+    }
+
+    std::string filePath = argv[1];
+
     initscr();
     keypad(stdscr, TRUE);
     noecho();
@@ -13,21 +19,15 @@ int main(int argc, char** argv) {
 
     start_color();
     init_pair(1, COLOR_WHITE, COLOR_BLACK);
-    lvim::Editor editor("test.txt");
+    lvim::Editor editor(filePath);
 
     attron(COLOR_PAIR(1));
 
-    while (editor.getInput() != '|') {
+    do {
         editor.display();
-    }
+    } while (editor.handleInput() != -1);
 
     attroff(COLOR_PAIR(1));
     endwin();
-
-    // for (auto& x : editor.content) {
-    //     std::cout << "|" << x << "|" << std::endl;
-    // }
-    // int x = 1;
-    // std::cin >> x;
     return 0;
 }
